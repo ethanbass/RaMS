@@ -348,7 +348,7 @@ checkOutputQuality <- function(output_data, grab_what){
 #' plot(tic$rt, tic$int, type = "l")
 grabAccessionData <- function(filename, accession_number){
   xml_data <- xml2::read_xml(filename)
-  arb_xpath <- paste0('//d1:cvParam[@accession="', accession_number, '"]')
+  arb_xpath <- paste0('//cvParam[@accession="', accession_number, '"]')
   arb_nodes <- xml2::xml_find_all(xml_data, arb_xpath)
   out_df <- data.frame(name=xml2::xml_attr(arb_nodes, "name"),
                        value=xml2::xml_attr(arb_nodes, "value"))
@@ -362,7 +362,7 @@ grabAccessionData <- function(filename, accession_number){
 checkFileType <- function(xml_data, node_to_check){
   # Check for mzML node
   # Length works because external pointer has length 2
-  if(!length(xml2::xml_find_first(xml_data, paste0("//d1:", node_to_check)))){
+  if(!length(xml2::xml_find_first(xml_data, paste0("//", node_to_check)))){
     stop(paste0("No ", node_to_check, " node found in this file"))
   }
 }

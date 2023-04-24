@@ -214,14 +214,14 @@ grabMzmlData <- function(filename, grab_what, verbosity=0,
 #' @return A list of values corresponding to various pieces of metadata
 #' for each file
 grabMzmlMetadata <- function(xml_data){
-  source_node <- xml2::xml_find_first(xml_data, xpath = "//d1:sourceFile")
+  source_node <- xml2::xml_find_first(xml_data, xpath = "//sourceFile")
   if(length(source_node)>0){
     source_file <- xml2::xml_attr(source_node, "name")
   } else {
     source_file <- "None found"
   }
 
-  inst_xpath <- "//d1:referenceableParamGroup/d1:cvParam"
+  inst_xpath <- "//referenceableParamGroup/cvParam"
   inst_nodes <- xml2::xml_find_first(xml_data, xpath = inst_xpath)
   if(length(inst_nodes)>0){
     inst_val <- xml2::xml_attr(inst_nodes, "name")
@@ -229,12 +229,12 @@ grabMzmlMetadata <- function(xml_data){
     inst_val <- "None found"
   }
 
-  config_xpath <- "//d1:componentList/child::node()"
+  config_xpath <- "//componentList/child::node()"
   config_nodes <- xml2::xml_find_all(xml_data, xpath = config_xpath)
   if(length(inst_nodes)>0){
     config_types <- xml2::xml_name(config_nodes)
     config_order <- xml2::xml_attr(config_nodes, "order")
-    config_name_nodes <- xml2::xml_find_first(config_nodes, "d1:cvParam")
+    config_name_nodes <- xml2::xml_find_first(config_nodes, "cvParam")
     config_names <- xml2::xml_attr(config_name_nodes, "name")
   } else {
     config_types <- "None found"
@@ -243,7 +243,7 @@ grabMzmlMetadata <- function(xml_data){
   }
 
 
-  time_node <- xml2::xml_find_first(xml_data, xpath = "//d1:run")
+  time_node <- xml2::xml_find_first(xml_data, xpath = "//run")
   time_val <- xml2::xml_attr(time_node, "startTimeStamp")
   if(!is.na(time_val)){
     time_stamp <- as.POSIXct(strptime(time_val, "%Y-%m-%dT%H:%M:%SZ"))
@@ -251,7 +251,7 @@ grabMzmlMetadata <- function(xml_data){
     time_stamp <- as.POSIXct(NA)
   }
 
-  mslevel_xpath <- '//d1:spectrum/d1:cvParam[@name="ms level"]'
+  mslevel_xpath <- '//spectrum/cvParam[@name="ms level"]'
   mslevel_nodes <- xml2::xml_find_all(xml_data, xpath = mslevel_xpath)
   if(length(mslevel_nodes)>0){
     ms_levels <- paste0("MS", unique(xml2::xml_attr(mslevel_nodes, "value")),
@@ -260,7 +260,7 @@ grabMzmlMetadata <- function(xml_data){
     ms_levels <- "None found"
   }
 
-  mzlow_xpath <- '//d1:spectrum/d1:cvParam[@name="lowest observed m/z"]'
+  mzlow_xpath <- '//spectrum/cvParam[@name="lowest observed m/z"]'
   mzlow_nodes <- xml2::xml_find_all(xml_data, xpath = mzlow_xpath)
   if(length(mzlow_nodes)>0){
     mz_lowest <- min(as.numeric(xml2::xml_attr(mzlow_nodes, "value")))
@@ -268,7 +268,7 @@ grabMzmlMetadata <- function(xml_data){
     mz_lowest <- NA_real_
   }
 
-  mzhigh_xpath <- '//d1:spectrum/d1:cvParam[@name="highest observed m/z"]'
+  mzhigh_xpath <- '//spectrum/cvParam[@name="highest observed m/z"]'
   mzhigh_nodes <- xml2::xml_find_all(xml_data, xpath = mzhigh_xpath)
   if(length(mzhigh_nodes)>0){
     mz_highest <- max(as.numeric(xml2::xml_attr(mzhigh_nodes, "value")))
@@ -276,7 +276,7 @@ grabMzmlMetadata <- function(xml_data){
     mz_highest <- NA_real_
   }
 
-  rt_xpath <- '//d1:spectrum/d1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_xpath <- '//spectrum/scanList/scan/cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_data, xpath = rt_xpath)
   rt_unit <- unique(xml_attr(rt_nodes, "unitName"))
   rt <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
@@ -291,12 +291,12 @@ grabMzmlMetadata <- function(xml_data){
     rt_end <- NA_real_
   }
 
-  centroided_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000127"]'
+  centroided_xpath <- '//spectrum/cvParam[@accession="MS:1000127"]'
   centroided_nodes <- xml2::xml_find_all(xml_data, xpath = centroided_xpath)
   if (length(centroided_nodes) > 0) {
     centroided <- TRUE
   } else {
-    profile_xpath <- '//d1:spectrum/d1:cvParam[@accession="MS:1000128"]'
+    profile_xpath <- '//spectrum/cvParam[@accession="MS:1000128"]'
     profile_nodes <- xml2::xml_find_all(xml_data, xpath = profile_xpath)
     if (length(profile_nodes) > 0) {
       centroided <- FALSE
@@ -305,10 +305,10 @@ grabMzmlMetadata <- function(xml_data){
     }
   }
 
-  polarity_pos <- '//d1:spectrum/d1:cvParam[@accession="MS:1000130"]'
+  polarity_pos <- '//spectrum/cvParam[@accession="MS:1000130"]'
   polarity_pos <- xml_find_all(xml_data, polarity_pos)
 
-  polarity_neg <- '//d1:spectrum/d1:cvParam[@accession="MS:1000129"]'
+  polarity_neg <- '//spectrum/cvParam[@accession="MS:1000129"]'
   polarity_neg <- xml_find_all(xml_data, polarity_neg)
 
 
@@ -321,7 +321,7 @@ grabMzmlMetadata <- function(xml_data){
     polarities <- NA_character_
   }
 
-  lambda_high_xpath <- '//d1:spectrum/d1:cvParam[@name="highest observed wavelength"]'
+  lambda_high_xpath <- '//spectrum/cvParam[@name="highest observed wavelength"]'
   lambda_high_nodes <- xml2::xml_find_all(xml_data, xpath = lambda_high_xpath)
   if(length(lambda_high_nodes)>0){
     lambda_highest <- max(as.numeric(xml2::xml_attr(lambda_high_nodes, "value")))
@@ -329,7 +329,7 @@ grabMzmlMetadata <- function(xml_data){
     lambda_highest <- NA_real_
   }
 
-  lambda_low_xpath <- '//d1:spectrum/d1:cvParam[@name="lowest observed wavelength"]'
+  lambda_low_xpath <- '//spectrum/cvParam[@name="lowest observed wavelength"]'
   lambda_low_nodes <- xml2::xml_find_all(xml_data, xpath = lambda_low_xpath)
   if(length(lambda_low_nodes)>0){
     lambda_lowest <- max(as.numeric(xml2::xml_attr(lambda_low_nodes, "value")))
@@ -339,7 +339,7 @@ grabMzmlMetadata <- function(xml_data){
 
   n_spectra <- length(rt_nodes)
 
-  chrom_xpath <- '//d1:chromatogram'
+  chrom_xpath <- '//chromatogram'
   chrom_nodes <- xml2::xml_find_all(xml_data, chrom_xpath)
   n_chromatograms <- length(chrom_nodes)
 
@@ -373,14 +373,14 @@ grabMzmlMetadata <- function(xml_data){
 #' @return A list of values used by other parsing functions, currently
 #' compression, mz_precision, int_precision
 grabMzmlEncodingData <- function(xml_data){
-  init_xpath <- "//*[self::d1:spectrum or self::d1:chromatogram]"
+  init_xpath <- "//*[self::spectrum or self::chromatogram]"
   init_node <- xml2::xml_find_first(xml_data, xpath = init_xpath)
   if(length(init_node)==0){
     stop(paste("Unable to find a spectrum or chromatogram node from",
                "which to extract metadata"))
   }
-  compr_xpath <- paste0('//d1:cvParam[@accession="MS:1000574"]|',
-                        '//d1:cvParam[@accession="MS:1000576"]')
+  compr_xpath <- paste0('//cvParam[@accession="MS:1000574"]|',
+                        '//cvParam[@accession="MS:1000576"]')
   compr_node <- xml2::xml_find_first(init_node, compr_xpath)
   compr_type <- xml2::xml_attr(compr_node, "name")
   compr <- switch(compr_type,
@@ -389,13 +389,13 @@ grabMzmlEncodingData <- function(xml_data){
                   `no compression`="none",
                   `none`="none")
 
-  mz_precision_xpath <- '//d1:cvParam[@accession="MS:1000523"]'
+  mz_precision_xpath <- '//cvParam[@accession="MS:1000523"]'
   mz_bit_node <- xml2::xml_find_first(init_node, mz_precision_xpath)
   mz_bit_type <- xml2::xml_attr(mz_bit_node, "name")
   mz_precision <- sub(mz_bit_type, pattern = "-bit float", replacement = "")
   mz_precision <- as.numeric(mz_precision)/8
 
-  int_bit_xpath <- '//d1:cvParam[@accession="MS:1000521"]'
+  int_bit_xpath <- '//cvParam[@accession="MS:1000521"]'
   int_bit_node <- xml2::xml_find_first(init_node, int_bit_xpath)
   int_bit_type <- xml2::xml_attr(int_bit_node, "name")
   int_precision <- sub(int_bit_type, pattern = "-bit float", replacement = "")
@@ -425,7 +425,7 @@ grabMzmlEncodingData <- function(xml_data){
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and
 #'   intensity (int).
 grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter){
-  ms1_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="1"]]'
+  ms1_xpath <- '//spectrum[cvParam[@name="ms level" and @value="1"]]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
   if(!length(ms1_nodes)){
     return(data.table(rt=numeric(), mz=numeric(), int=numeric()))
@@ -462,7 +462,7 @@ grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter){
 #'   (mz), fragment m/z (fragmz), collision energy (voltage), and intensity
 #'   (int).
 grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
-  ms2_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="2"]]'
+  ms2_xpath <- '//spectrum[cvParam[@name="ms level" and @value="2"]]'
 
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
@@ -505,8 +505,8 @@ grabMzmlMS2 <- function(xml_data, rtrange, file_metadata){
 #' @return A `data.table` with columns for retention time (rt), and intensity
 #'   (int).
 grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
-  ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
-                      '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
+  ms1_xpath <- paste0('//spectrum[cvParam[@name="ms level" and ',
+                      '@value="1"]][cvParam[@name="base peak intensity"]]')
 
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
@@ -517,7 +517,7 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
   }
 
   int_xpath <- ifelse(TIC, "total ion current", "base peak intensity")
-  int_xpath_full <- paste0('d1:cvParam[@name="', int_xpath, '"]')
+  int_xpath_full <- paste0('cvParam[@name="', int_xpath, '"]')
   int_nodes <- xml2::xml_find_all(ms1_nodes, xpath = int_xpath_full)
   int_vals <- as.numeric(xml2::xml_attr(int_nodes, "value"))
   return(data.table(rt=rt_vals, int=int_vals))
@@ -536,7 +536,7 @@ grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE){
 #' @return A `data.table` with columns for retention time (rt), wavelength
 #' (lambda), and intensity (int).
 grabMzmlDAD <- function(xml_data, rtrange, file_metadata){
-  dad_xpath <- "//d1:spectrum[contains(@id,'controllerType=4')]"
+  dad_xpath <- "//spectrum[contains(@id,'controllerType=4')]"
   dad_nodes <- xml2::xml_find_all(xml_data, dad_xpath)
   if(!length(dad_nodes)){
     return(data.table(rt=numeric(), lambda=numeric(), int=numeric()))
@@ -567,7 +567,7 @@ grabMzmlDAD <- function(xml_data, rtrange, file_metadata){
 #'
 #' @return A numeric vector of retention times, one for each scan
 grabSpectraRt <- function(xml_nodes){
-  rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_xpath <- 'scanList/scan/cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
   rt_unit <- unique(xml_attr(rt_nodes, "unitName"))
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
@@ -591,8 +591,8 @@ grabSpectraRt <- function(xml_nodes){
 #'
 #' @return A numeric vector of precursor masses, one for each scan
 grabSpectraPremz <- function(xml_nodes){
-  premz_xpath <- paste0('d1:precursorList/d1:precursor/d1:selectedIonList',
-                        '/d1:selectedIon/d1:cvParam[@name="selected ion m/z"]')
+  premz_xpath <- paste0('precursorList/precursor/selectedIonList',
+                        '/selectedIon/cvParam[@name="selected ion m/z"]')
   premz_nodes <- xml2::xml_find_all(xml_nodes, premz_xpath)
   as.numeric(xml2::xml_attr(premz_nodes, "value"))
 }
@@ -610,8 +610,8 @@ grabSpectraPremz <- function(xml_nodes){
 #'
 #' @return A numeric vector of collision energies, one for each scan.
 grabSpectraVoltage <- function(xml_nodes){
-  volt_xpath <- paste0('d1:precursorList/d1:precursor/d1:activation',
-                       '/d1:cvParam[@name="collision energy"]')
+  volt_xpath <- paste0('precursorList/precursor/activation',
+                       '/cvParam[@name="collision energy"]')
   volt_nodes <- xml2::xml_find_all(xml_nodes, volt_xpath)
   as.integer(xml2::xml_attr(volt_nodes, "value"))
 }
@@ -633,7 +633,7 @@ grabSpectraVoltage <- function(xml_nodes){
 #'
 #' @return A numeric vector of masses, many for each scan.
 grabSpectraMz <- function(xml_nodes, file_metadata){
-  mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary'
+  mz_xpath <- 'binaryDataArrayList/binaryDataArray[1]/binary'
   mz_vals <- xml2::xml_text(xml2::xml_find_all(xml_nodes, mz_xpath))
   lapply(mz_vals, function(binary){
     if(!nchar(binary))return(numeric(0))
@@ -663,7 +663,7 @@ grabSpectraMz <- function(xml_nodes, file_metadata){
 #'
 #' @return A numeric vector of intensities, many for each scan.
 grabSpectraInt <- function(xml_nodes, file_metadata){
-  int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
+  int_xpath <- 'binaryDataArrayList/binaryDataArray[2]/binary'
   int_vals <- xml2::xml_text(xml2::xml_find_all(xml_nodes, int_xpath))
   int_vals <- lapply(int_vals, function(binary){
     if(!nchar(binary))return(numeric(0))
@@ -680,14 +680,14 @@ grabSpectraInt <- function(xml_nodes, file_metadata){
 
 # Get chromatogram things (functions of xml_nodes) ----
 grabMzmlChroms <- function(xml_data, file_metadata){
-  chrom_xpath <- '//d1:chromatogram'
+  chrom_xpath <- '//chromatogram'
   chrom_nodes <- xml2::xml_find_all(xml_data, chrom_xpath)
 
   chrom_id <- xml_attr(chrom_nodes, "id")
   chrom_idx <- xml_attr(chrom_nodes, "index")
-  target_mz_xpath <- 'd1:precursor//d1:cvParam[@name="isolation window target m/z"]'
+  target_mz_xpath <- 'precursor//cvParam[@name="isolation window target m/z"]'
   target_mzs <- as.numeric(xml_attr(xml_child(chrom_nodes, target_mz_xpath), "value"))
-  product_mz_xpath <- 'd1:product//d1:cvParam[@name="isolation window target m/z"]'
+  product_mz_xpath <- 'product//cvParam[@name="isolation window target m/z"]'
   product_mzs <- as.numeric(xml_attr(xml_child(chrom_nodes, product_mz_xpath), "value"))
 
   time_vals <- grabChromRt(chrom_nodes, file_metadata)
@@ -717,7 +717,7 @@ grabChromInt <- function(chrom_nodes, file_metadata){
 
 # Other helper functions ----
 shrinkRTrangemzML <- function(xml_nodes, rtrange){
-  rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_xpath <- 'scanList/scan/cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
   if(any(rt_vals>150)){

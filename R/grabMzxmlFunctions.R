@@ -213,14 +213,14 @@ grabMzxmlData <- function(filename, grab_what, verbosity=0,
 #' @return A list of values corresponding to various pieces of metadata
 #' for each file
 grabMzxmlMetadata <- function(xml_data){
-  source_node <- xml2::xml_find_first(xml_data, xpath = "//d1:parentFile")
+  source_node <- xml2::xml_find_first(xml_data, xpath = "//parentFile")
   if(length(source_node)>0){
     source_file <- basename(xml2::xml_attr(source_node, "fileName"))
   } else {
     source_file <- "None found"
   }
 
-  inst_xpath <- "//d1:msInstrument/child::node()[starts-with(name(), 'ms')]"
+  inst_xpath <- "//msInstrument/child::node()[starts-with(name(), 'ms')]"
   inst_nodes <- xml2::xml_find_all(xml_data, xpath = inst_xpath)
   if(length(inst_nodes)>0){
     inst_names <- xml2::xml_attr(inst_nodes, "category")
@@ -231,7 +231,7 @@ grabMzxmlMetadata <- function(xml_data){
     names(inst_vals) <- "Instrument data"
   }
 
-  scan_nodes <- xml2::xml_find_all(xml_data, xpath = "//d1:scan")
+  scan_nodes <- xml2::xml_find_all(xml_data, xpath = "//scan")
 
   n_spectra <- length(scan_nodes)
 
@@ -296,7 +296,7 @@ grabMzxmlMetadata <- function(xml_data){
 #' @return A list of values used by other parsing functions, currently
 #' compression, precision, and endian encoding (endi_enc)
 grabMzxmlEncodingData <- function(xml_data){
-  peak_metadata <- xml2::xml_find_first(xml_data, '//d1:peaks')
+  peak_metadata <- xml2::xml_find_first(xml_data, '//peaks')
   compr_type <- xml2::xml_attr(peak_metadata, "compressionType")
   compr <- switch(compr_type,
                   `zlib`="gzip",
@@ -331,7 +331,7 @@ grabMzxmlEncodingData <- function(xml_data){
 #' @return A `data.table` with columns for retention time (rt), m/z (mz),
 #' and intensity (int).
 grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter){
-  ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
+  ms1_xpath <- '//scan[@msLevel="1" and @peaksCount>0]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
   rt_vals <- grabMzxmlSpectraRt(ms1_nodes)
@@ -364,7 +364,7 @@ grabMzxmlMS1 <- function(xml_data, file_metadata, rtrange, prefilter){
 #' @return A `data.table` with columns for retention time (rt),  precursor m/z (mz),
 #' fragment m/z (fragmz), collision energy (voltage), and intensity (int).
 grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
-  ms2_xpath <- '//d1:scan[@msLevel="2" and @peaksCount>0]'
+  ms2_xpath <- '//scan[@msLevel="2" and @peaksCount>0]'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
   if(!length(ms2_nodes)){
     return(data.table(rt=numeric(), premz=numeric(), fragmz=numeric(),
@@ -409,7 +409,7 @@ grabMzxmlMS2 <- function(xml_data, file_metadata, rtrange){
 #' @return A `data.table` with columns for retention time (rt), and intensity (int).
 grabMzxmlBPC <- function(xml_data, TIC=FALSE, rtrange){
   scan_nodes <- xml2::xml_find_all(
-    xml_data, '//d1:scan[@msLevel="1"]'
+    xml_data, '//scan[@msLevel="1"]'
   )
   rt_chrs <- xml2::xml_attr(scan_nodes, "retentionTime")
   rt_vals <- as.numeric(gsub(pattern = "PT|S", replacement = "", rt_chrs))
@@ -464,7 +464,7 @@ grabMzxmlSpectraRt <- function(xml_nodes){
 #'
 
 grabMzxmlSpectraPremz <- function(xml_nodes){
-  premz_nodes <- xml2::xml_find_all(xml_nodes, xpath = "d1:precursorMz")
+  premz_nodes <- xml2::xml_find_all(xml_nodes, xpath = "precursorMz")
   as.numeric(xml2::xml_text(premz_nodes))
 }
 
@@ -506,7 +506,7 @@ grabMzxmlSpectraVoltage <- function(xml_nodes){
 #'
 
 grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
-  all_peak_nodes <- xml2::xml_text(xml2::xml_find_all(xml_nodes, xpath = "d1:peaks"))
+  all_peak_nodes <- xml2::xml_text(xml2::xml_find_all(xml_nodes, xpath = "peaks"))
   vals <- lapply(all_peak_nodes, function(binary){
     if(!nchar(binary))return(matrix(ncol = 2, nrow = 0))
     decoded_binary <- base64enc::base64decode(binary)
@@ -523,7 +523,7 @@ grabMzxmlSpectraMzInt <- function(xml_nodes, file_metadata){
 
 # Other helper functions ----
 shrinkRTrangemzXML <- function(xml_nodes, rtrange){
-  rt_xpath <- 'd1:scanList/d1:scan/d1:cvParam[@name="scan start time"]'
+  rt_xpath <- 'scanList/scan/cvParam[@name="scan start time"]'
   rt_nodes <- xml2::xml_find_all(xml_nodes, rt_xpath)
   rt_vals <- as.numeric(xml2::xml_attr(rt_nodes, "value"))
   if(any(rt_vals>150)){

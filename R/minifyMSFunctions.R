@@ -208,10 +208,10 @@ minifyMzml <- function(filename, output_filename, ppm,
                      "I don't know how to recompile indices so it's ",
                      "getting dropped for the minified file."))
     }
-    xml_data <- xml2::xml_new_root(xml2::xml_find_first(xml_data, "//d1:mzML"))
+    xml_data <- xml2::xml_new_root(xml2::xml_find_first(xml_data, "//mzML"))
   }
   # Check for chromatogramList and drop if present, with warning
-  chromlist_node <- xml_find_all(xml_data, "//d1:chromatogramList")
+  chromlist_node <- xml_find_all(xml_data, "//chromatogramList")
   if(length(chromlist_node)>0){
     if(warn){
       warning(paste0("mzML file ", basename(filename),
@@ -224,12 +224,12 @@ minifyMzml <- function(filename, output_filename, ppm,
 
   # MS1 things
   ### Find MS1 intensity and m/z nodes
-  ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
-                      '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
+  ms1_xpath <- paste0('//spectrum[cvParam[@name="ms level" and ',
+                      '@value="1"]][cvParam[@name="base peak intensity"]]')
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
-  mz_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[1]/d1:binary'
+  mz_xpath <- 'binaryDataArrayList/binaryDataArray[1]/binary'
   ms1_mz_nodes <- xml2::xml_find_all(ms1_nodes, mz_xpath)
-  int_xpath <- 'd1:binaryDataArrayList/d1:binaryDataArray[2]/d1:binary'
+  int_xpath <- 'binaryDataArrayList/binaryDataArray[2]/binary'
   ms1_int_nodes <- xml2::xml_find_all(ms1_nodes, int_xpath)
 
   ### Convert MS1 nodes into data.tables
@@ -312,10 +312,10 @@ minifyMzml <- function(filename, output_filename, ppm,
   xml2::xml_text(ms1_mz_nodes) <- ms1_minified$mzs
   xml2::xml_text(ms1_int_nodes) <- ms1_minified$ints
   xml2::xml_attr(ms1_nodes, "defaultArrayLength") <- ms1_minified$arraylength
-  mz_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='m/z array']]"
+  mz_enclength_xpath <- "binaryDataArrayList/binaryDataArray[cvParam[@name='m/z array']]"
   mz_enclength_nodes <- xml2::xml_find_all(ms1_nodes, mz_enclength_xpath)
   xml2::xml_attr(mz_enclength_nodes, "encodedLength") <- ms1_minified$mz_enclength
-  int_enclength_xpath <- "d1:binaryDataArrayList/d1:binaryDataArray[d1:cvParam[@name='intensity array']]"
+  int_enclength_xpath <- "binaryDataArrayList/binaryDataArray[cvParam[@name='intensity array']]"
   int_enclength_nodes <- xml2::xml_find_all(ms1_nodes, int_enclength_xpath)
   xml2::xml_attr(int_enclength_nodes, "encodedLength") <- ms1_minified$int_enclength
 
@@ -324,7 +324,7 @@ minifyMzml <- function(filename, output_filename, ppm,
                    "lowest observed m/z", "highest observed m/z")
   param_cols <- c("bpmz", "bpint", "ticur", "minmz", "maxmz")
   mapply(function(xpath, val){
-    full_xpath <- paste0("d1:cvParam[@name='", xpath, "']")
+    full_xpath <- paste0("cvParam[@name='", xpath, "']")
     node <- xml2::xml_find_all(ms1_nodes, full_xpath)
     xml2::xml_attr(node, "value") <- ms1_minified[[val]]
   }, param_xpath, param_cols)
@@ -332,11 +332,11 @@ minifyMzml <- function(filename, output_filename, ppm,
 
   # MS2 things
   ### Drop all nodes with a precursor m/z outside of bounds
-  ms2_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
-                      '@value="2"]][d1:cvParam[@name="base peak intensity"]]')
+  ms2_xpath <- paste0('//spectrum[cvParam[@name="ms level" and ',
+                      '@value="2"]][cvParam[@name="base peak intensity"]]')
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
-  pre_xpath <- paste0('d1:precursorList/d1:precursor/d1:selectedIonList/',
-                      'd1:selectedIon/d1:cvParam[@name="selected ion m/z"]')
+  pre_xpath <- paste0('precursorList/precursor/selectedIonList/',
+                      'selectedIon/cvParam[@name="selected ion m/z"]')
   ms2_pre_nodes <- xml2::xml_find_all(ms2_nodes, pre_xpath)
   ms2_pre_vals <- as.numeric(xml2::xml_attr(ms2_pre_nodes, "value"))
   if(!is.null(mz_include)){
@@ -353,15 +353,15 @@ minifyMzml <- function(filename, output_filename, ppm,
   }
   xml2::xml_remove(ms2_nodes[to_remove])
   ### Re-number spectra
-  spectrum_nodes <- xml2::xml_find_all(xml_data, "//d1:spectrum")
-  speclist_node <- xml2::xml_find_first(xml_data, "//d1:spectrumList")
+  spectrum_nodes <- xml2::xml_find_all(xml_data, "//spectrum")
+  speclist_node <- xml2::xml_find_first(xml_data, "//spectrumList")
   xml2::xml_attr(speclist_node, "count") <- length(spectrum_nodes)
   xml2::xml_attr(spectrum_nodes, "index") <- seq_along(spectrum_nodes)-1
 
 
 
   # Add note that RaMS was used to shrink the file
-  proclist_node <- xml2::xml_find_all(xml_data, "//d1:dataProcessingList")
+  proclist_node <- xml2::xml_find_all(xml_data, "//dataProcessingList")
   xml2::xml_add_child(proclist_node, "dataProcessing", id="RaMS_R_package")
   proc_node <- xml2::xml_find_all(proclist_node, '//dataProcessing[@id="RaMS_R_package"]')
   xml2::xml_add_child(proc_node, "processingMethod", order=0, softwareRef="RaMS")
@@ -379,7 +379,7 @@ minifyMzml <- function(filename, output_filename, ppm,
                       name="ppm error for minification", value=ppm)
   process_count <- as.numeric(xml2::xml_attr(proclist_node, "count"))+1
   xml2::xml_attr(proclist_node, "count") <- process_count
-  softlist_node <- xml2::xml_find_all(xml_data, "//d1:softwareList")
+  softlist_node <- xml2::xml_find_all(xml_data, "//softwareList")
   xml2::xml_add_child(softlist_node, "software", id="RaMS",
                       version=as.character(packageVersion("RaMS")))
   soft_node <- xml2::xml_find_all(softlist_node, 'software[@id="RaMS"]')
@@ -451,7 +451,7 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
   file_metadata <- grabMzxmlEncodingData(xml_data)
 
   # Find MS1 intensity and m/z nodes
-  ms1_xpath <- '//d1:scan[@msLevel="1" and @peaksCount>0]'
+  ms1_xpath <- '//scan[@msLevel="1" and @peaksCount>0]'
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
   mz_int_vals <- grabMzxmlSpectraMzInt(ms1_nodes, file_metadata)
@@ -522,7 +522,7 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
   })
   ms1_minified <- do.call(what = "rbind", ms1_minified)
 
-  peak_nodes <- xml2::xml_find_first(ms1_nodes, "d1:peaks")
+  peak_nodes <- xml2::xml_find_first(ms1_nodes, "peaks")
   xml2::xml_text(peak_nodes) <- ms1_minified$mzints
 
   xml2::xml_attr(ms1_nodes, "peaksCount") <- ms1_minified$arraylength
@@ -534,9 +534,9 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
 
 
   # MS2 things
-  ms2_xpath <- '//d1:scan[@msLevel="2"]'
+  ms2_xpath <- '//scan[@msLevel="2"]'
   ms2_nodes <- xml2::xml_find_all(xml_data, ms2_xpath)
-  ms2_pre_nodes <- xml2::xml_find_all(ms2_nodes, "d1:precursorMz")
+  ms2_pre_nodes <- xml2::xml_find_all(ms2_nodes, "precursorMz")
   ms2_pre_vals <- as.numeric(xml2::xml_text(ms2_pre_nodes))
   if(!is.null(mz_include)){
     ms2_subset <- unlist(lapply(mz_include, function(premz_i){
@@ -556,14 +556,14 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
 
 
   # Add note that RaMS was used to shrink the file
-  proclist_node <- xml2::xml_find_all(xml_data, "//d1:dataProcessing")
+  proclist_node <- xml2::xml_find_all(xml_data, "//dataProcessing")
   xml2::xml_add_sibling(proclist_node, "dataProcessing")
   proc_node <- xml2::xml_find_first(xml_data, "//dataProcessing")
   xml2::xml_add_child(proc_node, "software", type="minification", name="RaMS",
                       version=as.character(packageVersion("RaMS")))
 
   # Remove index because the bytes will be off
-  index_node <- xml2::xml_find_first(xml_data, xpath = "/d1:mzXML/d1:indexs")
+  index_node <- xml2::xml_find_first(xml_data, xpath = "/mzXML/indexs")
   if(is.na(xml2::xml_type(index_node))){
     if(warn){
       warning(paste0("mzXML file ", basename(filename), " contains an index. ",
@@ -572,7 +572,7 @@ minifyMzxml <- function(filename, output_filename, ppm, mz_exclude=NULL,
     }
     xml2::xml_remove(index_node)
   }
-  offset_node <- xml2::xml_find_first(xml_data, xpath = "/d1:mzXML/d1:indexOffset")
+  offset_node <- xml2::xml_find_first(xml_data, xpath = "/mzXML/indexOffset")
   xml2::xml_remove(offset_node)
 
   # And write out the new version
