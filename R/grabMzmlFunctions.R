@@ -466,7 +466,8 @@ grabMzmlEncodingData <- function(xml_data){
 #' @return A `data.table` with columns for retention time (rt), m/z (mz), and
 #'   intensity (int).
 grabMzmlMS1 <- function(xml_data, rtrange, file_metadata, prefilter, incl_polarity){
-  ms1_xpath <- '//d1:spectrum[d1:cvParam[@name="ms level" and @value="1"]]'
+  ms1_xpath <- find_ms1_xpath(xml_data)
+
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
   if(!length(ms1_nodes)){
     if(incl_polarity){
@@ -657,8 +658,7 @@ grabMzmlMS3 <- function(xml_data, rtrange, file_metadata, incl_polarity){
 #' @return A `data.table` with columns for retention time (rt), and intensity
 #'   (int).
 grabMzmlBPC <- function(xml_data, rtrange, TIC=FALSE, incl_polarity){
-  ms1_xpath <- paste0('//d1:spectrum[d1:cvParam[@name="ms level" and ',
-                      '@value="1"]][d1:cvParam[@name="base peak intensity"]]')
+  ms1_xpath <- ms1_xpath <- find_ms1_xpath(xml_data)
 
   ms1_nodes <- xml2::xml_find_all(xml_data, ms1_xpath)
 
@@ -897,4 +897,15 @@ shrinkRTrangemzML <- function(xml_nodes, rtrange){
     rt_vals <- rt_vals/60
   }
   xml_nodes[rt_vals%between%rtrange]
+}
+
+find_ms1_xpath <- function(xml_data){
+  first_spec <- xml2::xml_find_first(xml_data, '//d1:spectrum')
+  has_ms1_flag <- length(xml2::xml_find_all(first_spec,
+                                             './/d1:cvParam[@accession="MS:1000579"]')) > 0
+  if(has_ms1_flag){
+    '//d1:spectrum[d1:cvParam[@accession="MS:1000579"]]'
+  } else {
+    '//d1:spectrum[d1:cvParam[@accession="MS:1000511" and @value="1"]]'
+  }
 }

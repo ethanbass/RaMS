@@ -1,4 +1,6 @@
 # RaMS (development version)
+ - Fixed MS1 detection for mzML files that mark spectra with the `MS1 spectrum` CV term (MS:1000579) instead of `ms level`=1
+   - This convention is used by some vendor software (e.g. Bruker's exporter) and was previously causing RaMS to silently return zero MS1 scans, TICs, and BPCs
 
 # RaMS 1.4
  - Added MS3 support to file reading and minification
